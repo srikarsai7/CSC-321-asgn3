@@ -18,6 +18,8 @@ D7FBD7D3B9A92EE1909D0D2263F80A76A6A24C087A091F531DBF0A0169B6A28A
 D662A4D18E73AFA32D779D5918D08BC8858F4DCEF97C2A24855E6EEB22B3B2E5
 """.replace("\n", ""), 16)
 
+#a = q - 1
+
 def generate_private_key():
     return random.randint(2, q-2)
 
@@ -50,8 +52,48 @@ def diffie_hellman_protocol():
     bob_priv = generate_private_key()
     bob_pub = compute_public_key(bob_priv)
 
-    alice_secret = compute_shared_secret(bob_pub, alice_priv)
-    bob_secret = compute_shared_secret(alice_pub, bob_priv)
+    alice_secret = compute_shared_secret(alice_pub, bob_priv)
+    bob_secret = compute_shared_secret(bob_pub, alice_priv)
+
+    if alice_secret != bob_secret:
+        print("Shared secret mismatch")
+    
+    symmetric_key = derive_key(alice_secret)
+
+    encrypted = encrypt_message(symmetric_key, "Hi Bob!")
+    print("(task 1) Encrypted message: ", encrypted)
+
+    decrypted = decrypt_message(symmetric_key, encrypted)
+    print("(task 1) Decrypted message: ", decrypted)
+
+    encrypted = encrypt_message(symmetric_key, "Hi Alice!")
+    print("(task 1) Encrypted message: ", encrypted)
+
+    decrypted = decrypt_message(symmetric_key, encrypted)
+    print("(task 1) Decrypted message: ", decrypted)
+
+
+    # task 2
+
+    mallory_priv = generate_private_key()
+    mallory_pub = compute_public_key(mallory_priv)
+
+    symmetric_key = derive_key(0)
+
+    encrypted_alice = encrypt_message(symmetric_key, "hello bob!")
+    decrypted_alice = decrypt_message(symmetric_key, encrypted_alice)
+
+    print(f"encrypted message by alice {encrypted_alice}")
+    print(f"decrypted message by alice {decrypted_alice}")
+
+    alice_priv = generate_private_key()
+    alice_pub = compute_public_key(alice_priv)
+
+    bob_priv = generate_private_key()
+    bob_pub = compute_public_key(bob_priv)
+
+    alice_secret = compute_shared_secret(q, bob_priv)
+    bob_secret = compute_shared_secret(q, alice_priv)
 
 
     if alice_secret != bob_secret:
@@ -60,19 +102,15 @@ def diffie_hellman_protocol():
     symmetric_key = derive_key(alice_secret)
 
     encrypted = encrypt_message(symmetric_key, "Hi Bob!")
-    print("Encrypted message: ", encrypted)
+    #print("Encrypted message: ", encrypted)
 
     decrypted = decrypt_message(symmetric_key, encrypted)
-    print("Decrypted message: ", decrypted)
+    #print("Decrypted message: ", decrypted)
 
     encrypted = encrypt_message(symmetric_key, "Hi Alice!")
-    print("Encrypted message: ", encrypted)
+    #print("Encrypted message: ", encrypted)
 
     decrypted = decrypt_message(symmetric_key, encrypted)
-    print("Decrypted message: ", decrypted)
-
-
-
-
+    #print("Decrypted message: ", decrypted)
 
 diffie_hellman_protocol()
