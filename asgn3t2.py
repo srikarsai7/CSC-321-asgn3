@@ -139,3 +139,32 @@ ciphertext = encrypt(keys[0], string_to_int("hi my name is molly"))
 plaintext = decrypt(keys[1], ciphertext)
 print (ciphertext)
 print(int_to_string(plaintext))
+
+### task 3
+bobs_message = "Hello, alice!"
+# alice generates an RSA key pair
+alice_keys = generate_keypair(1024)
+# alice computes s and c: 
+#   s = random prime and c = s^e mod n
+s = generate_prime(1024)
+c = encrypt(alice_keys[0], s)
+# Mallory Modifies c: 
+#   Mallory intercepts c and calculates c' = (c * pow(factor, e, n)) % n using a random integer factor coprime to n.
+factor = generate_prime(1024)
+c_prime = (c * pow(factor, alice_keys[0][1], alice_keys[0][0])) % alice_keys[0][0]
+# Bob Computes s': 
+#   Bob receives c' and decrypts it using Alice's private key to obtain s'.
+s_prime = decrypt(alice_keys[1], c_prime)
+# Bob Derives Key and Encrypts Message: 
+#   Bob derives a key k = sha256(s') and encrypts a message m using AES-CBC with k, resulting in c0.
+k = encrypt(alice_keys[0], s_prime)
+c0 = encrypt(alice_keys[0], string_to_int(bobs_message))
+# Mallory Recovers s:
+#    Mallory uses s_mallory = (s_prime * pow(factor, -1, n)) % n to recover the original s.
+s_mallory = (s_prime * pow(factor, -1, alice_keys[0][0])) % alice_keys[0][0]
+# Mallory Recovers Message: 
+#   Mallory calculates k_mallory = sha256(s_mallory) and decrypts c0 using k_mallory to recover the original message m.
+k_mallory = (encrypt(alice_keys[0], s_mallory), 1)
+m = int_to_string(decrypt(k_mallory, c0))
+print("original message: ", bobs_message)
+print("recovered message: ", m)
