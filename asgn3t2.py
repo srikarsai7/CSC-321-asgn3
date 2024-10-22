@@ -141,7 +141,7 @@ print (ciphertext)
 print(int_to_string(plaintext))
 
 ### task 3
-bobs_message = "Hello, alice!"
+'''bobs_message = "Hello, alice!"
 # alice generates an RSA key pair
 alice_keys = generate_keypair(1024)
 # alice computes s and c: 
@@ -164,7 +164,24 @@ c0 = encrypt(alice_keys[0], string_to_int(bobs_message))
 s_mallory = (s_prime * pow(factor, -1, alice_keys[0][0])) % alice_keys[0][0]
 # Mallory Recovers Message: 
 #   Mallory calculates k_mallory = sha256(s_mallory) and decrypts c0 using k_mallory to recover the original message m.
-k_mallory = (encrypt(alice_keys[0], s_mallory), 1)
-m = int_to_string(decrypt(k_mallory, c0))
+k_mallory = (s_mallory, alice_keys[0][1])
+m = unpad(decrypt(k_mallory, c0), AES.block_size)
+print(m)
+m = int_to_string(m)
 print("original message: ", bobs_message)
-print("recovered message: ", m)
+print("recovered message: ", m)'''
+
+#task 3 part 2
+alice_keys = generate_keypair(1024)
+s = shared_secret(alice_keys[0][1], alice_keys[1][1])
+e = 65567
+c = pow (s, e, (alice_keys[0][0]))
+c0 = c * pow(2, e, (alice_keys[0][0]))
+s0 = pow (c0, alice_keys[1][1], alice_keys[0][0])
+print(f"s0: {s0}")
+s_ded = (s0/2) * alice_keys[0][0]
+print(f"sded: {s_ded}")
+c2 = encrypt((alice_keys[0][0], s),string_to_int("hi im mallory"))
+print(c2)
+dec = decrypt((alice_keys[0][0], int(s_ded)), int(c2))
+print(dec)
