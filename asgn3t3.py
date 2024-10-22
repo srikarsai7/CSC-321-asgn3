@@ -73,10 +73,12 @@ def main():
     print("Alice s value:", s)
 
     bob_c = encrypt(s, alice_pub)
+    print ("bob_c:", bob_c)
 
     # Mallory intercepts the message
     k = 2
     bob_c0 = (bob_c * pow(k, alice_pub[1], alice_pub[0])) % alice_pub[0]
+    print("mallory intercepts. using k = 2, bob_c0 is now:", bob_c0)
 
     # Decrypts the modified ciphertext
     s0 = decrypt(bob_c0, alice_private_key)
