@@ -61,10 +61,13 @@ def encrypt(public_key, message):
     return pow(message, e, n)
 
 # Requirement: Implement decryption
-def decrypt(private_key, ciphertext):
+def decrypt(private_key, ciphertext: int):
     """Decrypt a ciphertext using RSA."""
-    n, d = private_key
-    return pow(ciphertext, d, n)
+    n = private_key[0]
+    d = private_key[1]
+    # print(f"n: {n}, d: {d}, c: {ciphertext}")
+    result = pow(ciphertext, d, n)
+    return result
 
 # Requirement: Convert ASCII string to hex, then to integer
 def string_to_int(message):
@@ -134,37 +137,43 @@ def dhp():
 
 dhp()
 
-keys = generate_keypair(1024)
+keys = generate_keypair(16)
 ciphertext = encrypt(keys[0], string_to_int("hi my name is molly"))
 plaintext = decrypt(keys[1], ciphertext)
-print (ciphertext)
-print(int_to_string(plaintext))
+print(ciphertext)
+print(plaintext)
 
 ### task 3
-bobs_message = "Hello, alice!"
+m = "Hello, alice!"
 # alice generates an RSA key pair
-alice_keys = generate_keypair(1024)
+alice_keys = generate_keypair(8)
+print (f"\nAlice's public key: {alice_keys[0]}\nAlice's private key: {alice_keys[1]}")
 # alice computes s and c: 
 #   s = random prime and c = s^e mod n
-s = generate_prime(1024)
-c = encrypt(alice_keys[0], s)
-# Mallory Modifies c: 
+s = generate_prime(8)
+e = alice_keys[0][1]
+n = alice_keys[0][0]
+d = alice_keys[1][1]
+c = pow(s, e, n)
+
+# Mallory Intercepts and Modifies c: 
 #   Mallory intercepts c and calculates c' = (c * pow(factor, e, n)) % n using a random integer factor coprime to n.
-factor = generate_prime(1024)
-c_prime = (c * pow(factor, alice_keys[0][1], alice_keys[0][0])) % alice_keys[0][0]
+factor = 2
+c_prime = (c * pow(factor, e, n)) % n
+print(f"\nMallory's modified ciphertext (c'): {c_prime}")
 # Bob Computes s': 
 #   Bob receives c' and decrypts it using Alice's private key to obtain s'.
-s_prime = decrypt(alice_keys[1], c_prime)
-# Bob Derives Key and Encrypts Message: 
-#   Bob derives a key k = sha256(s') and encrypts a message m using AES-CBC with k, resulting in c0.
-k = encrypt(alice_keys[0], s_prime)
-c0 = encrypt(alice_keys[0], string_to_int(bobs_message))
+s_prime = pow(c_prime, d, n)
 # Mallory Recovers s:
 #    Mallory uses s_mallory = (s_prime * pow(factor, -1, n)) % n to recover the original s.
-s_mallory = (s_prime * pow(factor, -1, alice_keys[0][0])) % alice_keys[0][0]
-# Mallory Recovers Message: 
+s_mallory =  s_prime * (pow(factor, -1, n))
+print(f"\nMallory's recovered s: {s_mallory}, original s: {s}")
+# Alice uses s to encrypt message m:
+c0 = encrypt((n, e), string_to_int(m))
+# Alice sends c0 to Bob and Mallory intercepts it.
+# Mallory uses c0 and recovers the original message m:
 #   Mallory calculates k_mallory = sha256(s_mallory) and decrypts c0 using k_mallory to recover the original message m.
-k_mallory = (encrypt(alice_keys[0], s_mallory), 1)
-m = int_to_string(decrypt(k_mallory, c0))
-print("original message: ", bobs_message)
-print("recovered message: ", m)
+
+recovered_m = decrypt((n, s_mallory), c0)
+print("original message: ", m)
+print("recovered message: ", int_to_string(int(recovered_m)))
